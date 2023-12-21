@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// import './App.css';
+
 const api = {
   key: "6532b4792b61f46e3d8d3d9b274da010",
   base: "https://api.openweathermap.org/data/2.5/"
@@ -33,6 +33,18 @@ function App() {
     }
   }
 
+  const getCurrentWeatherByCoordinates = (latitude: number, longitude: number) => {
+    fetch(`${api.base}weather?lat=${latitude}&lon=${longitude}&units=metric&APPID=${api.key}`)
+      .then(res => res.json())
+      .then(result => {
+        setWeather(result);
+        console.log(result);
+      })
+      .catch(error => {
+        console.error('Error fetching current weather:', error);
+      });
+  };
+
   const dateBuilder = (d: Date) => {
     let months = ["January", "February", "March", "April", "May", "Jun", "July", "August", "September", "October", "November", "December"];
     let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -44,6 +56,23 @@ function App() {
 
     return `${day} ${date} ${month} ${year}`
   }
+  const getLocationWeather = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          console.log('Current Location:', { latitude, longitude });
+          getCurrentWeatherByCoordinates(latitude, longitude);
+        },
+        error => {
+          console.error('Error getting current location:', error);
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+  };
+
   return (
     <div className={
       (typeof weather.main != "undefined")
@@ -69,14 +98,26 @@ function App() {
               <div className='location'>{weather.name}, {weather.sys.country}</div>
               <div className='date'>{dateBuilder(new Date())}</div>
             </div><div className='weather-box'>
+
               <div className='temp'>
                 {Math.round(weather.main.temp)}°C
               </div>
+              <div className='icon'>
+                {weather.weather && weather.weather[0] && (
+                  <img
+                    src={`http://openweathermap.org/img/wn/${weather.weather[0].icon}.png`}
+                    alt='weather icon'
+                  />
+                )}
+              </div>
               <div className='weather'>{weather.weather[0].main}</div>
             </div>
+
           </div>
+
         ) : ('')}
 
+        <button className='btn' onClick={getLocationWeather}>loc</button>
       </main>
     </div>
   );
